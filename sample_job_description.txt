@@ -1,0 +1,3 @@
+We are looking for an entry-level AI/Data Analyst intern.
+Required skills: Python, SQL, machine learning, pandas, numpy, Power BI, statistics and data visualization.
+Knowledge of Git and Streamlit is a plus.

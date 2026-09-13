@@ -1,0 +1,8 @@
+Demo:
+1. Start Streamlit.
+2. Upload a sample PDF resume.
+3. Paste sample_job_description.txt.
+4. Show match score.
+5. Show detected skills.
+6. Show missing skills.
+7. Explain that TF-IDF converts text to weighted terms and cosine similarity compares the two vectors.
