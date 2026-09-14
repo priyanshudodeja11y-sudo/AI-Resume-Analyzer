@@ -126,18 +126,18 @@ if resume_file and job_description:
             st.markdown("### 📊 Job Skill Match Visualization")
 
             skill_chart_data = {
-            "Skill": job_skills,
-             "Match": [1 if skill in resume_skills else 0 for skill in job_skills]
-}
+              "Skill": job_skills,
+              "Match": [1 if skill in resume_skills else 0 for skill in job_skills]
+        }
 
-              st.bar_chart(
-              skill_chart_data,
-              x="Skill",
-              y="Match"
-)
+            st.bar_chart(
+               skill_chart_data,
+                x="Skill",
+                y="Match"
+        )
 
-        st.markdown("### Extracted Resume Text")
-        st.text_area("Text", resume_text[:8000], height=250)
+              st.markdown("### Extracted Resume Text")
+              st.text_area("Text", resume_text[:8000], height=250)
 
         st.info(
             "Note: This is an academic prototype. The matching score is based on text similarity "
