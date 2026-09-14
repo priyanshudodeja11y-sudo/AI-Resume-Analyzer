@@ -31,7 +31,7 @@ def extract_skills(text):
         if skill.lower() in lower:
             found.append(skill)
     return sorted(set(found))
-    def ats_score(text, skills):
+def ats_score(text, skills): 
     lower = text.lower()
     score = 0
 
