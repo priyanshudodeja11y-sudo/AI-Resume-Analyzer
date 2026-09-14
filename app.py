@@ -139,11 +139,11 @@ if resume_file and job_description:
               st.markdown("### Extracted Resume Text")
               st.text_area("Text", resume_text[:8000], height=250)
 
-        st.info(
-            "Note: This is an academic prototype. The matching score is based on text similarity "
-            "and should not be treated as a real hiring decision."
+              st.info(
+                 "Note: This is an academic prototype. The matching score is based on text similarity "
+                 "and should not be treated as a real hiring decision."
         )
     except Exception as e:
-        st.error(f"Could not process the PDF: {e}")
+               st.error(f"Could not process the PDF: {e}")
 else:
-    st.info("Upload a resume PDF and paste a job description to begin.")
+               st.info("Upload a resume PDF and paste a job description to begin.")
