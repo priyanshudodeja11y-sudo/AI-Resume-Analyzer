@@ -31,6 +31,40 @@ def extract_skills(text):
         if skill.lower() in lower:
             found.append(skill)
     return sorted(set(found))
+    def ats_score(text, skills):
+    lower = text.lower()
+    score = 0
+
+    if re.search(r'\b[\w\.-]+@[\w\.-]+\.\w+\b', lower):
+        score += 15
+
+    if re.search(r'\b\d{10}\b', lower):
+        score += 10
+
+    sections = {
+        "education": 10,
+        "experience": 15,
+        "projects": 15,
+        "skills": 15
+    }
+
+    for section, points in sections.items():
+        if section in lower:
+            score += points
+
+    if len(skills) >= 3:
+        score += 10
+    elif len(skills) >= 1:
+        score += 5
+
+    word_count = len(text.split())
+
+    if word_count >= 300:
+        score += 10
+    elif word_count >= 150:
+        score += 5
+
+    return min(score, 100)
 
 def normalize(text):
     return re.sub(r"\s+", " ", text.lower()).strip()
@@ -68,12 +102,14 @@ if resume_file and job_description:
         job_skills = extract_skills(job_description)
         missing_skills = [s for s in job_skills if s not in resume_skills]
         score = similarity_score(resume_text, job_description)
+        ats = ats_score(resume_text, resume_skills)
 
         st.subheader("Analysis Result")
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3 ,c4 = st.columns(4)
         c1.metric("Resume Match", f"{score}%")
         c2.metric("Skills Found", len(resume_skills))
         c3.metric("Missing Job Skills", len(missing_skills))
+        c4.metric("ATS score",f"{ats}/100")
 
         st.progress(min(score / 100, 1.0))
 
