@@ -127,9 +127,9 @@ if resume_file and job_description:
 
             st.markdown("### 📊 Job Skill Match Visualization")
 
-             skill_chart_data = {
-            "Skill": job_skills,
-            "Match": [1 if skill in resume_skills else 0 for skill in job_skills]
+            skill_chart_data = {
+             "Skill": job_skills,
+             "Match": [1 if skill in resume_skills else 0 for skill in job_skills]
         }
 
             st.bar_chart(
