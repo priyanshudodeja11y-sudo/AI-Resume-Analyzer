@@ -7,9 +7,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-# ---------------------------------------------------------
+# =========================================================
 # PAGE CONFIGURATION
-# ---------------------------------------------------------
+# =========================================================
 
 st.set_page_config(
     page_title="AI Resume Analyzer",
@@ -18,9 +18,9 @@ st.set_page_config(
 )
 
 
-# ---------------------------------------------------------
-# PREDEFINED SKILLS
-# ---------------------------------------------------------
+# =========================================================
+# SKILLS DATABASE
+# =========================================================
 
 SKILLS = [
     "python",
@@ -62,23 +62,24 @@ SKILLS = [
 ]
 
 
-# ---------------------------------------------------------
-# PDF TEXT EXTRACTION
-# ---------------------------------------------------------
+# =========================================================
+# EXTRACT TEXT FROM PDF
+# =========================================================
 
 def extract_pdf_text(file_bytes):
     text = ""
 
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
-            text += (page.extract_text() or "") + "\n"
+            page_text = page.extract_text() or ""
+            text += page_text + "\n"
 
     return text
 
 
-# ---------------------------------------------------------
-# SKILL EXTRACTION
-# ---------------------------------------------------------
+# =========================================================
+# EXTRACT SKILLS
+# =========================================================
 
 def extract_skills(text):
     lower_text = text.lower()
@@ -91,37 +92,44 @@ def extract_skills(text):
     return sorted(set(found))
 
 
-# ---------------------------------------------------------
-# TEXT NORMALIZATION
-# ---------------------------------------------------------
+# =========================================================
+# NORMALIZE TEXT
+# =========================================================
 
 def normalize(text):
     return re.sub(r"\s+", " ", text.lower()).strip()
 
 
-# ---------------------------------------------------------
-# RESUME / JOB DESCRIPTION SIMILARITY
-# ---------------------------------------------------------
+# =========================================================
+# CALCULATE RESUME MATCH SCORE
+# =========================================================
 
 def similarity_score(resume, job):
     if not resume.strip() or not job.strip():
         return 0
 
-    vectorizer = TfidfVectorizer(stop_words="english")
+    vectorizer = TfidfVectorizer(
+        stop_words="english"
+    )
 
-    matrix = vectorizer.fit_transform([
-        normalize(resume),
-        normalize(job)
-    ])
+    matrix = vectorizer.fit_transform(
+        [
+            normalize(resume),
+            normalize(job)
+        ]
+    )
 
-    score = cosine_similarity(matrix[0:1], matrix[1:2])[0][0]
+    score = cosine_similarity(
+        matrix[0:1],
+        matrix[1:2]
+    )[0][0]
 
     return round(score * 100, 2)
 
 
-# ---------------------------------------------------------
-# ATS SCORE
-# ---------------------------------------------------------
+# =========================================================
+# CALCULATE ATS SCORE
+# =========================================================
 
 def ats_score(text, skills):
     lower = text.lower()
@@ -129,14 +137,19 @@ def ats_score(text, skills):
     score = 0
 
     # Email
-    if re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", lower):
+    if re.search(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+        lower
+    ):
         score += 15
 
     # Phone number
-    if re.search(r"\b\d{10}\b", lower.replace(" ", "")):
+    digits_only = re.sub(r"\D", "", text)
+
+    if re.search(r"\d{10}", digits_only):
         score += 10
 
-    # Common resume sections
+    # Resume sections
     sections = {
         "education": 10,
         "experience": 15,
@@ -154,13 +167,12 @@ def ats_score(text, skills):
     elif len(skills) >= 3:
         score += 10
 
-    # Keep score between 0 and 100
     return min(score, 100)
 
 
-# ---------------------------------------------------------
+# =========================================================
 # SIDEBAR
-# ---------------------------------------------------------
+# =========================================================
 
 with st.sidebar:
 
@@ -175,9 +187,9 @@ with st.sidebar:
     st.write("7. Visualize skill matching")
 
 
-# ---------------------------------------------------------
+# =========================================================
 # MAIN TITLE
-# ---------------------------------------------------------
+# =========================================================
 
 st.title("📄 AI Resume Analyzer")
 
@@ -186,9 +198,9 @@ st.caption(
 )
 
 
-# ---------------------------------------------------------
-# INPUTS
-# ---------------------------------------------------------
+# =========================================================
+# USER INPUT
+# =========================================================
 
 resume_file = st.file_uploader(
     "Upload Resume (PDF)",
@@ -205,68 +217,111 @@ job_description = st.text_area(
 )
 
 
-# ---------------------------------------------------------
+# =========================================================
 # ANALYSIS
-# ---------------------------------------------------------
+# =========================================================
 
-if resume_file and job_description:
+if resume_file and job_description.strip():
 
     try:
 
-        # Extract resume text
-        resume_text = extract_pdf_text(resume_file.read())
+        # -------------------------------------------------
+        # READ RESUME
+        # -------------------------------------------------
 
-        # Extract skills
-        resume_skills = extract_skills(resume_text)
-        job_skills = extract_skills(job_description)
+        resume_bytes = resume_file.read()
 
-        # Find matching skills
+        resume_text = extract_pdf_text(
+            resume_bytes
+        )
+
+
+        # -------------------------------------------------
+        # EXTRACT SKILLS
+        # -------------------------------------------------
+
+        resume_skills = extract_skills(
+            resume_text
+        )
+
+        job_skills = extract_skills(
+            job_description
+        )
+
+
+        # -------------------------------------------------
+        # MATCHING SKILLS
+        # -------------------------------------------------
+
         matching_skills = [
-            skill for skill in job_skills
+            skill
+            for skill in job_skills
             if skill in resume_skills
         ]
 
-        # Find missing skills
+
+        # -------------------------------------------------
+        # MISSING SKILLS
+        # -------------------------------------------------
+
         missing_skills = [
-            skill for skill in job_skills
+            skill
+            for skill in job_skills
             if skill not in resume_skills
         ]
 
-        # Calculate similarity
+
+        # -------------------------------------------------
+        # RESUME MATCH SCORE
+        # -------------------------------------------------
+
         score = similarity_score(
             resume_text,
             job_description
         )
 
-        # Calculate ATS score
+
+        # -------------------------------------------------
+        # ATS SCORE
+        # -------------------------------------------------
+
         ats = ats_score(
             resume_text,
             resume_skills
         )
 
 
-        # -------------------------------------------------
-        # RESULTS
-        # -------------------------------------------------
+        # =================================================
+        # ANALYSIS RESULT
+        # =================================================
 
         st.subheader("Analysis Result")
 
+
+        # -------------------------------------------------
+        # FOUR METRICS
+        # -------------------------------------------------
+
         c1, c2, c3, c4 = st.columns(4)
+
 
         c1.metric(
             "Resume Match",
             f"{score}%"
         )
 
+
         c2.metric(
             "Skills Found",
             len(resume_skills)
         )
 
+
         c3.metric(
             "Missing Job Skills",
             len(missing_skills)
         )
+
 
         c4.metric(
             "ATS Score",
@@ -274,21 +329,31 @@ if resume_file and job_description:
         )
 
 
-        # Match progress bar
+        # -------------------------------------------------
+        # MATCH PROGRESS
+        # -------------------------------------------------
+
         st.progress(
             min(score / 100, 1.0)
         )
 
 
-        # -------------------------------------------------
-        # SKILLS SECTION
-        # -------------------------------------------------
+        # =================================================
+        # SKILLS
+        # =================================================
 
         left, right = st.columns(2)
 
+
+        # -------------------------------------------------
+        # LEFT COLUMN
+        # -------------------------------------------------
+
         with left:
 
-            st.markdown("### ✅ Skills Detected")
+            st.markdown(
+                "### ✅ Skills Detected"
+            )
 
             st.write(
                 ", ".join(resume_skills)
@@ -297,7 +362,9 @@ if resume_file and job_description:
             )
 
 
-            st.markdown("### 🎯 Matching Job Skills")
+            st.markdown(
+                "### 🎯 Matching Job Skills"
+            )
 
             st.write(
                 ", ".join(matching_skills)
@@ -306,9 +373,15 @@ if resume_file and job_description:
             )
 
 
+        # -------------------------------------------------
+        # RIGHT COLUMN
+        # -------------------------------------------------
+
         with right:
 
-            st.markdown("### ⚠️ Skills to Improve")
+            st.markdown(
+                "### ⚠️ Skills to Improve"
+            )
 
             st.write(
                 ", ".join(missing_skills)
@@ -317,11 +390,14 @@ if resume_file and job_description:
             )
 
 
-        # -------------------------------------------------
+        # =================================================
         # GRAPHICAL SKILL MATCH
-        # -------------------------------------------------
+        # =================================================
 
-        st.markdown("### 📊 Job Skill Match Visualization")
+        st.markdown(
+            "### 📊 Job Skill Match Visualization"
+        )
+
 
         if job_skills:
 
@@ -333,28 +409,41 @@ if resume_file and job_description:
                 ]
             }
 
+
+            # -------------------------------------------------
+            # HORIZONTAL BAR CHART
+            # -------------------------------------------------
+
             st.bar_chart(
                 skill_chart_data,
                 x="Skill",
-                y="Match"
+                y="Match",
+                horizontal=True
             )
 
+
             st.caption(
-                "1 = Skill found in resume | 0 = Skill missing from resume"
+                "1 = Skill found in resume  |  "
+                "0 = Skill missing from resume"
             )
+
 
         else:
 
             st.info(
-                "No predefined skills were detected in the job description."
+                "No predefined skills were detected "
+                "in the job description."
             )
 
 
-        # -------------------------------------------------
+        # =================================================
         # EXTRACTED RESUME TEXT
-        # -------------------------------------------------
+        # =================================================
 
-        st.markdown("### 📄 Extracted Resume Text")
+        st.markdown(
+            "### 📄 Extracted Resume Text"
+        )
+
 
         st.text_area(
             "Text",
@@ -363,9 +452,9 @@ if resume_file and job_description:
         )
 
 
-        # -------------------------------------------------
+        # =================================================
         # DISCLAIMER
-        # -------------------------------------------------
+        # =================================================
 
         st.info(
             "Note: This is an academic prototype. "
@@ -373,6 +462,10 @@ if resume_file and job_description:
             "and should not be treated as a real hiring decision."
         )
 
+
+    # =====================================================
+    # ERROR HANDLING
+    # =====================================================
 
     except Exception as e:
 
