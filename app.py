@@ -100,6 +100,7 @@ if resume_file and job_description:
         resume_text = extract_pdf_text(resume_file.read())
         resume_skills = extract_skills(resume_text)
         job_skills = extract_skills(job_description)
+        matching_skills = [s for s in job_skills if s in resume_skills]
         missing_skills = [s for s in job_skills if s not in resume_skills]
         score = similarity_score(resume_text, job_description)
         ats = ats_score(resume_text, resume_skills)
@@ -115,8 +116,10 @@ if resume_file and job_description:
 
         left, right = st.columns(2)
         with left:
-            st.markdown("### ✅ Skills Detected")
             st.write(", ".join(resume_skills) if resume_skills else "No predefined skills detected.")
+
+            st.markdown("### 🎯 Matching Job Skills")
+            st.write(", ".join(matching_skills) if matching_skills else "No matching job skills found.")
         with right:
             st.markdown("### ⚠️ Skills to Improve")
             st.write(", ".join(missing_skills) if missing_skills else "No major predefined skill gaps detected.")
